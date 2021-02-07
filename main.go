@@ -138,6 +138,18 @@ func processCmdArgs() {
 	}
 }
 
+type ProbitOrderBookItem struct {
+	Side         string `json:"side"`
+	Price        string `json:"price"`
+	Quantity     string `json:"quantity"`
+	PriceConv    float64
+	QuantityConv float64
+}
+
+type ProbitOrderBookResponse struct {
+	Data []ProbitOrderBookItem `json:"data"`
+}
+
 func main() {
 	processCmdArgs()
 
@@ -170,6 +182,35 @@ func main() {
 			if len(oldItemData.MarketId) > 0 {
 				oldData[oldItemData.MarketId] = oldItemData
 			}
+			go func(item ProbitTickerItem) {
+				client := &http.Client{}
+				request, err := http.NewRequest("GET", apiUrl+"order_book?market_id="+item.MarketId, nil)
+
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				request.Header.Set("x-requested-with", "XMLHttpRequest")
+				result, err := client.Do(request)
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				defer result.Body.Close()
+
+				respData, err := ioutil.ReadAll(result.Body)
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				orderBookData := &ProbitOrderBookResponse{}
+				err = json.Unmarshal(respData, orderBookData)
+				if err != nil {
+					fmt.Println(err)
+				}
+				//fmt.Println(orderBookData)
+				fmt.Println("Order book for " + item.MarketId)
+			}(item)
 		}
 		time.Sleep(time.Duration(5) * time.Second)
 	}
