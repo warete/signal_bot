@@ -1,4 +1,4 @@
-#signal_bot
+# signal_bot
 Command-line arguments:
 * -tg-token - Telegram bot api token
 * -tg-chatid - Telegram chat id for notifications
